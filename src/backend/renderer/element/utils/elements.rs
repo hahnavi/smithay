@@ -116,9 +116,10 @@ impl<R: Renderer, E: RenderElement<R>> RenderElement<R> for RescaleRenderElement
         frame: &mut <R>::Frame<'_, '_>,
         src: Rectangle<f64, Buffer>,
         dst: Rectangle<i32, Physical>,
+        damage: &[Rectangle<i32, Physical>],
         cache: &UserDataMap,
     ) -> Result<(), <R>::Error> {
-        self.element.capture_framebuffer(frame, src, dst, cache)
+        self.element.capture_framebuffer(frame, src, dst, damage, cache)
     }
 }
 
@@ -315,9 +316,10 @@ impl<R: Renderer, E: RenderElement<R>> RenderElement<R> for CropRenderElement<E>
         frame: &mut <R>::Frame<'_, '_>,
         src: Rectangle<f64, Buffer>,
         dst: Rectangle<i32, Physical>,
+        damage: &[Rectangle<i32, Physical>],
         cache: &UserDataMap,
     ) -> Result<(), <R>::Error> {
-        self.element.capture_framebuffer(frame, src, dst, cache)
+        self.element.capture_framebuffer(frame, src, dst, damage, cache)
     }
 }
 
@@ -432,9 +434,10 @@ impl<R: Renderer, E: RenderElement<R>> RenderElement<R> for RelocateRenderElemen
         frame: &mut <R>::Frame<'_, '_>,
         src: Rectangle<f64, Buffer>,
         dst: Rectangle<i32, Physical>,
+        damage: &[Rectangle<i32, Physical>],
         cache: &UserDataMap,
     ) -> Result<(), <R>::Error> {
-        self.element.capture_framebuffer(frame, src, dst, cache)
+        self.element.capture_framebuffer(frame, src, dst, damage, cache)
     }
 }
 

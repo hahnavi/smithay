@@ -938,7 +938,13 @@ impl OutputDamageTracker {
                         .effects_cache
                         .entry(element_id.clone())
                         .or_default();
-                    element.capture_framebuffer(&mut frame, element_src, element_geometry, cache)?;
+                    element.capture_framebuffer(
+                        &mut frame,
+                        element_src,
+                        element_geometry,
+                        &element_damage,
+                        cache,
+                    )?;
                 }
 
                 element.draw(

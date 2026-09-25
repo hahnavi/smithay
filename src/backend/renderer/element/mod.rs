@@ -594,14 +594,23 @@ pub trait RenderElement<R: Renderer>: Element {
     /// to blit the contents of the `frame`.
     ///
     /// Will only be called if `Element::is_framebuffer_effect` returns `true`.
+    ///
+    /// `damage` describes the regions of the framebuffer (relative to the element's
+    /// geometry, like the `damage` parameter of [`RenderElement::draw`]) that changed
+    /// since the last capture and thus made this capture necessary. Implementations
+    /// that can update their cached contents incrementally may restrict the capture
+    /// to these regions, expanded as needed (e.g. by the radius of the implemented
+    /// effect). Capturing the full area described by `src`/`dst` is always valid,
+    /// and so is treating an empty `damage` as unknown (i.e. capturing everything).
     fn capture_framebuffer(
         &self,
         frame: &mut R::Frame<'_, '_>,
         src: Rectangle<f64, BufferCoords>,
         dst: Rectangle<i32, Physical>,
+        damage: &[Rectangle<i32, Physical>],
         cache: &UserDataMap,
     ) -> Result<(), R::Error> {
-        let _ = (frame, src, dst, cache);
+        let _ = (frame, src, dst, damage, cache);
         unimplemented!("error: is_framebuffer_effect without capture_framebuffer implementation!");
     }
 }
@@ -699,9 +708,10 @@ where
         frame: &mut <R>::Frame<'_, '_>,
         src: Rectangle<f64, BufferCoords>,
         dst: Rectangle<i32, Physical>,
+        damage: &[Rectangle<i32, Physical>],
         cache: &UserDataMap,
     ) -> Result<(), <R>::Error> {
-        (*self).capture_framebuffer(frame, src, dst, cache)
+        (*self).capture_framebuffer(frame, src, dst, damage, cache)
     }
 }
 
@@ -811,9 +821,10 @@ impl<R: Renderer, E: Element + RenderElement<R>> RenderElement<R> for Namespaced
         frame: &mut <R>::Frame<'_, '_>,
         src: Rectangle<f64, BufferCoords>,
         dst: Rectangle<i32, Physical>,
+        damage: &[Rectangle<i32, Physical>],
         cache: &UserDataMap,
     ) -> Result<(), <R>::Error> {
-        self.inner.capture_framebuffer(frame, src, dst, cache)
+        self.inner.capture_framebuffer(frame, src, dst, damage, cache)
     }
 }
 
@@ -1163,6 +1174,7 @@ macro_rules! render_elements_internal {
             frame: &mut <$renderer as $crate::backend::renderer::RendererSuper>::Frame<'_, '_>,
             src: $crate::utils::Rectangle<f64, $crate::utils::Buffer>,
             dst: $crate::utils::Rectangle<i32, $crate::utils::Physical>,
+            damage: &[$crate::utils::Rectangle<i32, $crate::utils::Physical>],
             cache: &$crate::utils::user_data::UserDataMap,
         ) -> Result<(), <$renderer as $crate::backend::renderer::RendererSuper>::Error>
         where
@@ -1180,7 +1192,7 @@ macro_rules! render_elements_internal {
                     $(
                         #[$meta]
                     )*
-                    Self::$body(x) => $crate::render_elements_internal!(@call $renderer $(as $other_renderer)?; capture_framebuffer; x, frame, src, dst, cache)
+                    Self::$body(x) => $crate::render_elements_internal!(@call $renderer $(as $other_renderer)?; capture_framebuffer; x, frame, src, dst, damage, cache)
                 ),*,
                 Self::_GenericCatcher(_) => unreachable!(),
             }
@@ -1229,6 +1241,7 @@ macro_rules! render_elements_internal {
             frame: &mut <$renderer as $crate::backend::renderer::RendererSuper>::Frame<'_, '_>,
             src: $crate::utils::Rectangle<f64, $crate::utils::Buffer>,
             dst: $crate::utils::Rectangle<i32, $crate::utils::Physical>,
+            damage: &[$crate::utils::Rectangle<i32, $crate::utils::Physical>],
             cache: &$crate::utils::user_data::UserDataMap,
         ) -> Result<(), <$renderer as $crate::backend::renderer::RendererSuper>::Error>
         {
@@ -1238,7 +1251,7 @@ macro_rules! render_elements_internal {
                     $(
                         #[$meta]
                     )*
-                    Self::$body(x) => $crate::render_elements_internal!(@call $renderer $(as $other_renderer)?; capture_framebuffer; x, frame, src, dst, cache)
+                    Self::$body(x) => $crate::render_elements_internal!(@call $renderer $(as $other_renderer)?; capture_framebuffer; x, frame, src, dst, damage, cache)
                 ),*,
                 Self::_GenericCatcher(_) => unreachable!(),
             }
@@ -1829,9 +1842,10 @@ where
         frame: &mut <R>::Frame<'_, '_>,
         src: Rectangle<f64, BufferCoords>,
         dst: Rectangle<i32, Physical>,
+        damage: &[Rectangle<i32, Physical>],
         cache: &UserDataMap,
     ) -> Result<(), <R>::Error> {
-        self.0.capture_framebuffer(frame, src, dst, cache)
+        self.0.capture_framebuffer(frame, src, dst, damage, cache)
     }
 }
 
